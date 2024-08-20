@@ -1,0 +1,1 @@
+- spawn an attribute window that lets the user introspect individual object attributes on sidebar selection 
