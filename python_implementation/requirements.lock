@@ -18,8 +18,6 @@ click==8.1.7
     # via black
 cocos2d==0.6.10
     # via imgui
-colorama==0.4.6
-    # via click
 cython==0.29.37
     # via imgui
 glfw==2.7.0
