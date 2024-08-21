@@ -1,3 +1,6 @@
 cpp_implementation/*.o
 cpp_implementation/algoviz 
 cpp_implementation/imgui.ini
+cpp_implementation/.vs/** 
+cpp_implementation/CppProperties.json
+python_implementation/Algoviz_.ini

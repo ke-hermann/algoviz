@@ -5,6 +5,57 @@ import mockobjects
 from imgui_bundle import hello_imgui, imgui, immapp, ImVec2
 from custom_types import DataObject
 
+import threading
+import socket
+import queue
+
+
+# Function to handle client connections
+def handle_client(client_socket, client_address, message_queue):
+    print(f"[INFO] Connected to {client_address}")
+    while True:
+        try:
+            message = client_socket.recv(1024).decode("utf-8")
+            if not message:
+                break
+            print(f"[{client_address}] {message}")
+            # Put the message in the queue to be processed by the main thread
+            message_queue.put((client_address, message))
+            # Echo the message back to the client
+            client_socket.send(f"Received: {message}".encode("utf-8"))
+        except ConnectionResetError:
+            break
+    print(f"[INFO] Connection closed by {client_address}")
+    client_socket.close()
+
+
+# Function to start the server
+def start_server(host, port, message_queue):
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((host, port))
+    server.listen(5)
+    print(f"[INFO] Server listening on {host}:{port}")
+
+    while True:
+        client_socket, client_address = server.accept()
+        client_handler = threading.Thread(
+            target=handle_client,
+            args=(client_socket, client_address, message_queue),
+            daemon=True,  # Allows the server to exit even if threads are still running
+        )
+        client_handler.start()
+
+
+# Function to run the server in a separate thread
+def run_server_thread(host="0.0.0.0", port=9999):
+    message_queue = queue.Queue()  # Queue for communication between threads
+    server_thread = threading.Thread(
+        target=start_server, args=(host, port, message_queue), daemon=True
+    )
+    server_thread.start()
+    print("[INFO] Server running in a separate thread")
+    return message_queue
+
 
 class ObjectInspector:
     def __init__(self, obj: DataObject):
@@ -57,6 +108,8 @@ class Gui:
         # initial UI layout
         self.startup = True
         self.fps = 1 / fps
+        # outbound connection so we can actually receive user data
+        self.message_queue = run_server_thread()  # Start the server on a non-blocking thread
 
     def ui_loop(self):
         # UI Loop
