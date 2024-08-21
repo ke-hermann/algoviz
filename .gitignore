@@ -1,1 +1,3 @@
 cpp_implementation/*.o
+cpp_implementation/algoviz 
+cpp_implementation/imgui.ini
