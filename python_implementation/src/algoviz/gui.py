@@ -8,22 +8,31 @@ from custom_types import DataObject
 import threading
 import socket
 import queue
-
+import pickle
 
 # Function to handle client connections
 def handle_client(client_socket, client_address, message_queue):
     print(f"[INFO] Connected to {client_address}")
     while True:
         try:
-            message = client_socket.recv(1024).decode("utf-8")
-            if not message:
+            # Receive the data from the client
+            data = client_socket.recv(4096)
+            if not data:
                 break
-            print(f"[{client_address}] {message}")
-            # Put the message in the queue to be processed by the main thread
-            message_queue.put((client_address, message))
-            # Echo the message back to the client
-            client_socket.send(f"Received: {message}".encode("utf-8"))
+            
+            # Deserialize the data to a Python object
+            obj = pickle.loads(data)
+            print(obj)
+            
+            # Put the object in the queue to be processed by the main thread
+            message_queue.put((client_address, obj))
+            
+            # Send acknowledgment back to the client
+            client_socket.send("Object received".encode('utf-8'))
         except ConnectionResetError:
+            break
+        except Exception as e:
+            print(f"[ERROR] {e}")
             break
     print(f"[INFO] Connection closed by {client_address}")
     client_socket.close()
