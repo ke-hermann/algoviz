@@ -4,3 +4,4 @@ cpp_implementation/imgui.ini
 cpp_implementation/.vs/** 
 cpp_implementation/CppProperties.json
 python_implementation/Algoviz_.ini
+python_implementation/VENV

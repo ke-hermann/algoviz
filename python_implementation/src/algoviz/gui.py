@@ -1,14 +1,17 @@
 import sys
 import time
-import mockobjects
+import logging
 
-from imgui_bundle import hello_imgui, imgui, immapp, ImVec2
+from imgui_bundle import hello_imgui, imgui, immapp, ImVec2, IM_COL32
 from custom_types import DataObject
 
 import threading
 import socket
 import queue
 import pickle
+
+logging.getLogger().setLevel(logging.INFO)
+
 
 # Function to handle client connections
 def handle_client(client_socket, client_address, message_queue):
@@ -19,16 +22,15 @@ def handle_client(client_socket, client_address, message_queue):
             data = client_socket.recv(4096)
             if not data:
                 break
-            
+
             # Deserialize the data to a Python object
             obj = pickle.loads(data)
-            print(obj)
-            
+
             # Put the object in the queue to be processed by the main thread
             message_queue.put((client_address, obj))
-            
+
             # Send acknowledgment back to the client
-            client_socket.send("Object received".encode('utf-8'))
+            client_socket.send("Object received".encode("utf-8"))
         except ConnectionResetError:
             break
         except Exception as e:
@@ -80,10 +82,6 @@ class ObjectInspector:
             return self.data
 
     def display(self):
-        if self.startup is True:
-            imgui.set_next_window_pos(ImVec2(300, 300))
-            imgui.set_next_window_size(ImVec2(400, 300))
-
         if self.is_open:
             _, self.is_open = imgui.begin("Object Inspector", True)
 
@@ -109,7 +107,7 @@ class Gui:
     def __init__(self, fps=144):
         imgui.create_context()
         # list of containers holding the data objects we're going to visualize
-        self.data_objects = [mockobjects.mock_list()]
+        self.data_objects = []
         self.selected_object = None
         # UI state
         self.startup = True
@@ -118,9 +116,16 @@ class Gui:
         self.startup = True
         self.fps = 1 / fps
         # outbound connection so we can actually receive user data
-        self.message_queue = run_server_thread()  # Start the server on a non-blocking thread
+        self.message_queue = (
+            run_server_thread()
+        )  # Start the server on a non-blocking thread
 
     def ui_loop(self):
+        # check the queue to see if we've been sent any objects
+        while not self.message_queue.empty():
+            client_address, obj = self.message_queue.get()
+            logging.info(f"Received {obj} from {client_address}")
+            self.data_objects.append(obj)
         # UI Loop
         hello_imgui.apply_theme(hello_imgui.ImGuiTheme_.imgui_colors_dark)
         self.sidebar()
@@ -145,8 +150,19 @@ class Gui:
         elif self.selected_object.visualized is False:
             pass
         else:
-            # to be implemented
-            pass
+            if self.selected_object.category == "grid":
+                dl = imgui.get_foreground_draw_list()
+                pos = imgui.get_cursor_screen_pos()
+                padding = 20
+                size = 10
+                for (x, y), v in self.selected_object.data.items():
+                    i = (x * size) + pos.x + padding
+                    j = (y * size) + pos.y + padding
+                    dl.add_rect_filled(
+                        ImVec2(i, j),
+                        ImVec2(i + size, j + size),
+                        IM_COL32(255, 255, 255, 255),
+                    )
         imgui.end()
 
     def sidebar(self):
@@ -159,7 +175,6 @@ class Gui:
         if self.data_objects is not None:
             for element in self.data_objects:
                 imgui.button(element.name, ImVec2(imgui.get_window_width() - 10, 20))
-
                 if imgui.is_item_hovered():
                     imgui.set_tooltip(element.category)
 
