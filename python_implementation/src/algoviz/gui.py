@@ -120,12 +120,19 @@ class Gui:
             run_server_thread()
         )  # Start the server on a non-blocking thread
 
+    def append_object(self, obj):
+        """utility class to make sure received objects have necessary metadata.
+        If necessary wrap them."""
+
+        if isinstance(obj, DataObject):
+            self.data_objects.append(obj)
+
     def ui_loop(self):
         # check the queue to see if we've been sent any objects
         while not self.message_queue.empty():
             client_address, obj = self.message_queue.get()
             logging.info(f"Received {obj} from {client_address}")
-            self.data_objects.append(obj)
+            self.append_object(obj)
         # UI Loop
         hello_imgui.apply_theme(hello_imgui.ImGuiTheme_.imgui_colors_dark)
         self.sidebar()

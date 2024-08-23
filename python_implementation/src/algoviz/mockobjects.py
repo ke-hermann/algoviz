@@ -5,6 +5,27 @@ import uuid
 from custom_types import DataObject
 
 
+def mock_ascii_text():
+    text = """
+            _   _      _ _        __        __         _     _ _ _
+            | | | | ___| | | ___   \ \      / /__  _ __| | __| | |
+            | |_| |/ _ \ | |/ _ \   \ \ /\ / / _ \| '__| |/ _` | |
+            |  _  |  __/ | | (_) |   \ V  V / (_) | |  | | (_| |_|
+            |_| |_|\___|_|_|\___/     \_/\_/ \___/|_|  |_|\__,_(_)
+            """
+
+    grid = {}
+    for i, row in enumerate(text.splitlines()):
+        for j, c in enumerate(row):
+            if c == " ":
+                continue
+            grid[(j, i)] = c
+
+    return DataObject(
+        name=str(uuid.uuid4()), category="grid", visualized=True, data=grid
+    )
+
+
 def mock_list():
     return DataObject(
         name=str(uuid.uuid4()),

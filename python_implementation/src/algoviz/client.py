@@ -1,7 +1,6 @@
 import socket
 import pickle
 
-from custom_types import DataObject
 import mockobjects
 
 
@@ -29,6 +28,6 @@ if __name__ == "__main__":
     # Create a Python object to send
     example = mockobjects.mock_list()
     example_grid = mockobjects.mock_cooridnate_grid()
+    example_ascii = mockobjects.mock_ascii_text()
     # Send the object to the server
-    send_object_to_server(example_grid)
-
+    send_object_to_server(example_ascii)
